@@ -225,32 +225,23 @@ class ObjectDetectionEvaluator(DetectionEvaluator):
       2. per_category_ap: category specific results with keys of the form
         'PerformanceByCategory/mAP@<matching_iou_threshold>IOU/category'.
     """
-    (per_class_ap, mean_ap, _, _, per_class_corloc, mean_corloc) = (
+    (per_class_ap, mean_ap, precisions, recalls, per_class_corloc, mean_corloc) = (
         self._evaluation.evaluate())
     pascal_metrics = {
         self._metric_prefix +
         'Precision/mAP@{}IOU'.format(self._matching_iou_threshold):
             mean_ap
     }
-    if self._evaluate_corlocs:
-      pascal_metrics[self._metric_prefix + 'Precision/meanCorLoc@{}IOU'.format(
+
+    pascal_metrics[self._metric_prefix + 'Precision/meanCorLoc@{}IOU'.format(
           self._matching_iou_threshold)] = mean_corloc
     category_index = label_map_util.create_category_index(self._categories)
-    for idx in range(per_class_ap.size):
-      if idx + self._label_id_offset in category_index:
-        display_name = (
-            self._metric_prefix + 'PerformanceByCategory/AP@{}IOU/{}'.format(
-                self._matching_iou_threshold,
-                category_index[idx + self._label_id_offset]['name']))
-        pascal_metrics[display_name] = per_class_ap[idx]
 
-        # Optionally add CorLoc metrics.classes
-        if self._evaluate_corlocs:
-          display_name = (
-              self._metric_prefix + 'PerformanceByCategory/CorLoc@{}IOU/{}'
-              .format(self._matching_iou_threshold,
-                      category_index[idx + self._label_id_offset]['name']))
-          pascal_metrics[display_name] = per_class_corloc[idx]
+    pascal_metrics[self._metric_prefix + 'Recall@{}IOU'.format(
+          self._matching_iou_threshold)] = recalls[-1]
+    category_index = label_map_util.create_category_index(self._categories)
+ 
+ 
 
     return pascal_metrics
 
